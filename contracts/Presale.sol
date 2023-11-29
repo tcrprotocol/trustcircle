@@ -16,7 +16,7 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract BSCYPresale is Ownable {
+contract TCRPresale is Ownable {
     using SafeMath for uint256;
     
     IERC20 tcr;
