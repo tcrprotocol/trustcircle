@@ -16,17 +16,26 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+/*
+ * ooooooooooooooooooooooooooooooooooooooooooooooooo
+ * ────────╔════╗──────╔╗─╔═══╗─────╔╗──────────────
+ * ────────║╔╗╔╗║─────╔╝╚╗║╔═╗║─────║║──────────────
+ * ────────╚╝║║╠╩╦╗╔╦═╩╗╔╝║║─╚╬╦═╦══╣║╔══╗──────────
+ * ──────────║║║╔╣║║║══╣║─║║─╔╬╣╔╣╔═╣║║║═╣──────────
+ * ──────────║║║║║╚╝╠══║╚╗║╚═╝║║║║╚═╣╚╣║═╣──────────
+ * ──────────╚╝╚╝╚══╩══╩═╝╚═══╩╩╝╚══╩═╩══╝──────────
+ * ooooooooooooooooooooooooooooooooooooooooooooooooo
+ */
+
+
 contract Airdrop is Ownable {
     using SafeMath for uint256;
     IERC20 tcr;
 
-    uint256 constant BP = 102400;
-    uint256 private startTime;
-    uint256 private endTime;
+    uint256 constant BP = 100;
     uint256 public totalClaimed;
-    uint256 public allocationAmount;
+    bool public canClaim;
 
-    mapping (address => uint256) public _airClaim;
     mapping(address => bool) public  _hasClaimed;
 
     event Claimed(address indexed recipient, uint256 amount);
@@ -35,57 +44,38 @@ contract Airdrop is Ownable {
         tcr = IERC20(_address); 
     }
 
-    function setStart(uint256 _start)
+    function setStart(bool _canClaim)
         public 
         onlyOwner 
     { 
-        startTime = _start;
+        canClaim = _canClaim;
     }
 
-    function setEnds(uint256 _ends) 
+    function withdrawUnClaim(uint256 amount) 
         public 
-        onlyOwner 
+        onlyOwner
     {
-        endTime = _ends;
-    }
-    
-    function allocationQuota() 
-        public 
-        view 
-        returns(uint256)
-    {
-        return _airClaim[msg.sender];
-    }
-
-    function setClaimableAmounts(address[] memory addresses, uint256[] memory amounts) 
-        public 
-        onlyOwner 
-    {
-        require(addresses.length == amounts.length, "Input arrays must have the same length.");
-        
-        for (uint256 i = 0; i < addresses.length; i++) {
-            require(allocationAmount.add(amounts[i]) <= BP.mul(1e18), "Total claimable amount exceeds BP limit");
-            _airClaim[addresses[i]] = _airClaim[addresses[i]].add(amounts[i]);
-            allocationAmount = allocationAmount.add(amounts[i]);
-        }
+        require(amount <= tcr.balanceOf(address(this)), "insufficient balance");
+        tcr.transfer(msg.sender, amount);
     }
 
     function claimAirdrop() 
         public 
     {
-        require(block.timestamp >= startTime, "Airdrop claim not start.");
-        require(block.timestamp <= endTime, "Airdrop claim ended.");
-
-        require(!_hasClaimed[msg.sender], "Already claimed.");
-        require(_airClaim[msg.sender] > 0, "Insufficient claim balance.");
-        require(totalClaimed.add(_airClaim[msg.sender]) <= BP.mul(1e18), "Airdrop has been fully claimed.");
         
-        totalClaimed = totalClaimed.add(_airClaim[msg.sender]);
-        tcr.transfer(msg.sender, _airClaim[msg.sender]);
-        _airClaim[msg.sender] = 0;
+        require(canClaim, "Airdrop has ended.");
+        require(!_hasClaimed[msg.sender], "Already claimed.");
+        require(totalClaimed.add(20e18) <= BP.mul(1e18), "Airdrop has been fully claimed.");
+        
+        totalClaimed = totalClaimed.add(20e18);
+        tcr.transfer(msg.sender, 20e18);
         _hasClaimed[msg.sender] = true;
     }
 }
+
+
+
+
 
 
 
